@@ -4,6 +4,7 @@
 #define HASH_CAPACITY 0.75
 #define CAPACIDAD_MINIMA 3
 
+#define FACTOR_CARGA_MAX 0.75
 
 #define ERROR -1
 
@@ -11,7 +12,6 @@ struct entrada
 {   
     const char *clave; //string de lectura
     void *valor;
-    bool vacio;
 };
 
 struct diccionario 
@@ -22,13 +22,72 @@ struct diccionario
 };
 
 
+// Función "algoritmo DJB2" utilizado para hash
+unsigned long hash(char *str, size_t capacidad) {
+
+        unsigned long hash = 5381;
+        int c;
+        while ((c = *str++))
+            hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+        return hash % capacidad;
+
+}
+
+/**
+ * Devuelve el factor de carga de la tabla hash.
+ */
+float factor_carga(size_t cantidad, size_t capacidad)
+{
+    if (capacidad < 0) {
+        return 0;
+    }
+
+    float f_carga = (float)cantidad / (float)capacidad;  
+
+	return f_carga;
+}
+
+size_t posicion_tabla(size_t clave, size_t capacidad)
+{
+    if (capacidad <= 0) {
+        return 0;
+    }
+
+    size_t posicion = clave % capacidad;
+
+    return posicion;
+}
+
+
 /*
  * Debo de duplicar el tamaño del diccionario
  *
  * Devuelve el índice a 
  * 
 */
-size_t hash(size_t capacidad, char *clave);
+
+bool re_hashing(diccionario_t *d)
+{
+    if (!d) {
+        return false;
+    }
+
+    size_t tamanio = d->capacidad_hash * 2;
+
+    bool exito = false;
+
+    struct diccionario *aux = realloc(d, tamanio);
+
+    if (!aux) {
+        return exito;
+    } else {
+        d = aux;
+        exito = true;
+    }
+
+    return exito;
+}
+
 
 diccionario_t *diccionario_crear(unsigned capacidad_inicial)
 {
@@ -55,8 +114,6 @@ diccionario_t *diccionario_crear(unsigned capacidad_inicial)
         return NULL;
     }
 
-    nuevo_diccionario->entradas->vacio = true;
-
     return nuevo_diccionario;
 }
 
@@ -71,6 +128,8 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 
     size_t indice = hash(d->capacidad_hash, clave);
 
+    //Inserción
+    
     if(exito) {
         d->cantidad++;
     }
