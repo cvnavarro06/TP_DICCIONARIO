@@ -195,10 +195,8 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
             if (anterior) {
                 *anterior = NULL;
             }
-
             exito = true;
         }
-
     }
     
     if(exito) {
