@@ -167,13 +167,16 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 
         indice = (indice + 1) %d->capacidad_hash;
 
-        //Busco un espacio vacio, donde pueda insertar el elemento
         while (d->entradas[indice].clave || !fin) {
             indice = (indice + 1) %d->capacidad_hash;
 
+            //Si encuentro el lugar donde está la clave, inserto.
             if (strcmp(d->entradas[indice].clave, clave) == 0) {
                 d->entradas[indice].valor = valor;
 
+                if (anterior) {
+                    *anterior = d->entradas[indice].valor;
+                }
                 exito = true;
             }
 
@@ -183,17 +186,18 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
             }
         }
 
+        //Si no existía la clave en la tabla, inserto nuevos valores en la misma.
         if (!fin && !exito) {
             d->entradas[indice].valor = valor;
             d->entradas[indice].clave = clave;
             
+            if (anterior) {
+                *anterior = NULL;
+            }
+
             exito = true;
         }
 
-    }
-
-    if (anterior) {
-        *anterior = NULL;
     }
     
     if(exito) {
