@@ -1,5 +1,6 @@
 #include "diccionario.h"
 #include <string.h>
+#include <stdio.h>
 
 #define CARGA_MINIMA 0.75
 #define CAPACIDAD_MINIMA 3
@@ -21,6 +22,23 @@ struct diccionario
     size_t cantidad;
 };
 
+
+char *duplicar_string(char *string)
+{
+	if (string == NULL) {
+		return NULL;
+	}
+
+	size_t largo_string = strlen(string) + 1;
+
+	char *nuevo_string = malloc(largo_string * sizeof(char));
+
+	if (nuevo_string != NULL) {
+		memcpy(nuevo_string, string, largo_string);
+	}
+
+	return nuevo_string;
+}
 
 // Función "algoritmo DJB2" utilizado para hash
 size_t hash(char *clave) 
@@ -134,41 +152,54 @@ diccionario_t *diccionario_crear(unsigned capacidad_inicial)
 bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 			  void **anterior)
 {
-    if (!d || !clave || !anterior) {
+    if (!d || !clave) {
         return false;
     }
 
     //Verificación de la tabla de hash (Ver si hace falta ReHashear)
-    if (factor_carga(d->cantidad, d->capacidad_hash) >= CARGA_MINIMA) {
-        re_hashing(d);
-    }
+    //if (factor_carga(d->cantidad, d->capacidad_hash) >= CARGA_MINIMA) {
+    //    re_hashing(d);
+    //}
 
     size_t capacidad_hash_actual = d->capacidad_hash;
 
     bool exito = false;
 
     size_t n_clave = hash(clave);
-
     size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
     
     //Caso donde las claves son iguales
-    if (strcmp(d->entradas[posicion].clave, clave) == 0) {
-        if (anterior) {
-            *anterior = d->entradas[posicion].valor;
+    if (d->entradas[posicion].clave != NULL) {
+        if (strcmp(d->entradas[posicion].clave, clave) == 0) {
+            if (anterior) {
+                *anterior = d->entradas[posicion].valor;
+            }
+            d->entradas[posicion].valor = valor;
+            
+            exito = true;
         }
-        d->entradas[posicion].valor = valor;
+    } else {
+        char *d_clave = duplicar_string(clave);
         
+        if (!d_clave) {
+            return false;
+        }
+
+        d->entradas[posicion].clave = d_clave;
+        d->entradas[posicion].valor = valor;
+
         exito = true;
     }
     
-    size_t original = posicion;
-
+    
     if (!exito) {
+        size_t original = posicion;
+        
         bool fin = false;
 
         posicion = (posicion + 1) % capacidad_hash_actual;
 
-        while (d->entradas[posicion].clave || !fin) {
+        while (d->entradas[posicion].clave && !fin && !exito) {
             posicion = (posicion + 1) % capacidad_hash_actual;
 
             //Si encuentro el lugar donde está la clave, inserto.
