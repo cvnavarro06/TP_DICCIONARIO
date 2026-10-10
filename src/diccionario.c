@@ -139,7 +139,9 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
     }
 
     //Verificación de la tabla de hash (Ver si hace falta ReHashear)
-    if (factor_carga(d->cantidad, d->capacidad_hash) >= )
+    if (factor_carga(d->cantidad, d->capacidad_hash) >= CARGA_MINIMA) {
+        re_hashing(d);
+    }
 
     bool exito = false;
 
@@ -158,21 +160,30 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
         exito = true;
     }
     
-    size_t inicio = indice;
+    size_t og = indice;
 
     if (!exito) {
         bool fin = false;
 
         indice = (indice + 1) %d->capacidad_hash;
+
+        //Busco un espacio vacio, donde pueda insertar el elemento
         while (d->entradas[indice].clave || !fin) {
             indice = (indice + 1) %d->capacidad_hash;
 
-            if (indice == inicio) {
+            if (strcmp(d->entradas[indice].clave, clave) == 0) {
+                d->entradas[indice].valor = valor;
+
+                exito = true;
+            }
+
+            //Si la tabla esta llena salgo de loop (Caso improbable)
+            if (indice == og) {
                 fin = true;
             }
         }
 
-        if (!fin) {
+        if (!fin && !exito) {
             d->entradas[indice].valor = valor;
             d->entradas[indice].clave = clave;
             
@@ -217,22 +228,44 @@ void *diccionario_obtener(diccionario_t *d, char *clave)
     
     char *valor_obt = { NULL };
 
-    size_t indice = hash(d->capacidad_hash, clave);
+    size_t capacidad_hash_actual = d->capacidad_hash;
+
+    size_t n_clave = hash(capacidad_hash_actual, clave);
+
+    size_t indice = posicion_tabla(clave, capacidad_hash_actual);
 
     bool encontrado = false;
 
-    //Esto no va a funcionar
-    //if (strcmp(d->entradas[indice].clave, clave) == 0) {
-    //    valor_obt = d->entradas->valor;
-    //} else {
-    //    for (int i = indice + 1; i<d->capacidad_hash && !encontrado; i++) {
-    //        if (strcmp(d->entradas[i].clave, clave) == 0) {
-    //            valor_obt = d->entradas[i].valor;
+    if (strcmp(d->entradas[indice].clave, clave) == 0) {
+        valor_obt = d->entradas[indice].valor;
 
-    //            encontrado = true;
-    //        }
-    //    }
-    //}
+        encontrado = true;
+    }
+
+    if (!encontrado) {
+        size_t og = indice;
+
+        bool fin = false;
+        indice = (indice + 1) % capacidad_hash_actual;
+        
+        //Voy buscando en proximos indices de la tabla
+        while (d->entradas[indice].clave || !fin || !encontrado) {
+            
+            //Si son iguales, las claves, devuelvo el valor
+            if (strcmp(d->entradas[indice].clave, clave) == 0) {
+                valor_obt = d->entradas[indice].valor;
+
+                encontrado = true;
+            }
+
+            /* Si ya recorrí toda la tabla y no se encontro la clave, dejo de buscar.
+             * Por defecto se devolverá NULL
+            */
+            if (og = indice) {
+                fin = true;
+            }
+        }
+    }
 
     return valor_obt;
 }
@@ -285,5 +318,21 @@ void diccionario_destruir(diccionario_t *d)
     free(d);
 }
 
-void diccionario_destruir_todo(diccionario_t *d, void (*destructor)(void *));
+void diccionario_destruir_todo(diccionario_t *d, void (*destructor)(void *))
+{
+    if (!d || !destructor) {
+        return;
+    }
+
+    for (int i = 0; i<d->capacidad_hash; i++) {
+
+        if (&d->entradas[i] != NULL) {
+            free(d->entradas[i].clave);
+            destructor(d->entradas[i].valor);
+        }
+    }
+
+    free(d->entradas);
+    free(d);
+}
 
