@@ -26,7 +26,7 @@ void liberar_datos(char *palabra)
 /*
  * La cola debe estar previamente creada.
  *
- * Devuelve true si la operación ha sido exitosa, caso contrario devuelve false por algún en la operación.
+ * Devuelve true si la operación ha sido exitosa, caso contrario devuelve false por algún error en la operación.
 */
 bool parsear_texto(cola_t *cola, char *texto)
 {
@@ -124,6 +124,53 @@ bool cargar_diccionario(FILE* archivo, struct diccionario *d)
 	return exito; 
 }
 
+/*
+ * Se espera una cola y un diccionario previamente verificados.
+ *
+ * 
+*/
+void mostrar_por_pantalla(struct cola *c, struct diccionario *d)
+{
+
+	char *palabra = { NULL };
+	
+	char *dato_cola = { NULL };
+
+	char *valor = { NULL };
+
+	if (cola_cantidad(c) == 0) {
+		return;
+	}
+
+	while (cola_cantidad(c) != 0) {
+
+		dato_cola = (char*)cola_desencolar(c);
+
+		palabra = diccionario_buscar(d, dato_cola);
+
+		if (diccionario_buscar(d, palabra)) { //Si se encuentra en el diccionario, muestro su valor
+			
+			valor = diccionario_eliminar(d, palabra);
+			
+			printf("%s ",valor);
+			
+		} else { //Si no se encuentra en el diccionario, muestro la palabra
+			
+			printf("%s ", palabra);
+		
+		}
+	}
+	if (palabra) { //Palabra podría seguir siendo NULL | NO SE PUEDE LIBERAR NULL
+		free(palabra);
+	}
+	if (valor) { //Valor podría seguir siendo NULL | NO SE PUEDE LIBERAR NULL
+		free(valor);
+	}
+
+	free(dato_cola);
+
+}
+
 int main(int argc, char *argv[])
 {
     //if (argc < 3) {
@@ -148,43 +195,29 @@ int main(int argc, char *argv[])
 
 	if (!cargar_diccionario(archivo, diccionario)) {
 		diccionario_destruir_todo(diccionario, liberar_datos);
+		fclose(archivo);
 		return ERROR;
 	}
+
+	//Cierro el archivo, no lo voy a usar más
+	fclose(archivo);
 
 	cola_t *cola = cola_crear();
 
 	if (!cola) {
+		diccionario_destruir(diccionario);
 		return ERROR;
 	}
 
 	//Cargo la cola con las palabras
-	parsear_texto(cola, argv[TEXTO]);
-
-	for (size_t i = 0; i<cola_cantidad(cola); i++) {
-
-		char *palabra = { NULL };
-
-		char *dato_cola = (char*)cola_desencolar(cola);
-
-		palabra = diccionario_buscar(diccionario, dato_cola);
-
-		if (diccionario_buscar(diccionario, palabra)) { //Si se encuentra en el diccionario, muestro su valor
-			char *valor = diccionario_eliminar(diccionario, palabra);
-			printf("%s ",valor);
-		} else { //Si no se encuentra en el diccionario, muestro la palabra
-			printf("%s ", palabra);
-		}
-
-
-
+	if (!parsear_texto(cola, argv[TEXTO])) {
+		
+		return ERROR;
 	}
+
+	mostrar_por_pantalla(cola, diccionario);
 
 	diccionario_destruir_todo(diccionario, liberar_datos);
 
 	return EXITO;
-
-    // Averiguar si se puede usar un DS cola
-		
-		//Simplemente desencolo secuencialmente y veo si la palabra es una clave o no, si no lo es lo printeo nomal, si lo es printeo su valor
-		
 }
