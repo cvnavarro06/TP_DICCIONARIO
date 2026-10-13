@@ -8,6 +8,7 @@
 #define FACTOR_CARGA_MAX 0.75
 
 #define ERROR -1
+#define ERR 0
 
 struct entrada
 {   
@@ -65,7 +66,7 @@ size_t hash(char *clave)
  */
 float factor_carga(size_t cantidad, size_t capacidad)
 {
-    if (capacidad < 0) {
+    if (capacidad == 0) {
         return 0;
     }
 
@@ -317,7 +318,7 @@ void *diccionario_obtener(diccionario_t *d, char *clave)
             /* Si ya recorrí toda la tabla y no se encontro la clave, dejo de buscar.
              * Por defecto se devolverá NULL
             */
-            if (original = posicion) {
+            if (original == posicion) {
                 fin = true;
             }
         }
@@ -416,7 +417,7 @@ void *diccionario_eliminar(diccionario_t *d, char *clave)
 size_t diccionario_cantidad(diccionario_t *d)
 {
     if (d == NULL) {
-        return ERROR;
+        return ERR;
     }
 
     return d->cantidad;
@@ -433,7 +434,7 @@ void diccionario_destruir(diccionario_t *d)
 
     for (int i = 0; i<d->capacidad_hash; i++) {
 
-        if (&d->entradas[i] != NULL) {
+        if (d->entradas[i].clave != NULL) {
             free(d->entradas[i].clave);
         } 
     }
@@ -450,7 +451,7 @@ void diccionario_destruir_todo(diccionario_t *d, void (*destructor)(void *))
 
     for (int i = 0; i<d->capacidad_hash; i++) {
 
-        if (&d->entradas[i] != NULL) {
+        if (d->entradas[i].clave != NULL) {
             free(d->entradas[i].clave);
             destructor(d->entradas[i].valor);
         }
