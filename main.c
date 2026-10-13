@@ -23,30 +23,6 @@ void liberar_datos(char *palabra)
 	free(palabra);
 }
 
-int no_case_sensitive_strcmp(const char *string_1, const char *string_2)
-{
-	bool diferentes = false;
-
-	int diferencia = tolower(*string_1) - tolower(*string_2);
-	while (*string_1 && *string_2 && !diferentes) {
-		//Si es distinto de 0 significa que lo son iguales, por ende no es necesario seguir el bucle
-		if (diferencia != 0) {
-			diferentes = true;
-		} else {
-			//Avanzo haciendo aritmetica de punteros
-			string_1++;
-			string_2++;
-			diferencia = tolower(*string_1) - tolower(*string_2);
-		}
-	}
-
-	if (diferentes) {
-		return diferencia;
-	}
-
-	return diferencia;
-}
-
 /*
  * La cola debe estar previamente creada.
  *
@@ -163,13 +139,10 @@ int main(int argc, char *argv[])
 		return ERROR;
 	}
 
-    if (no_case_sensitive_strcmp(argv[ARCHIVO], NULO) == 0) {
-        return ERROR;
-    }
-
 	FILE *archivo = fopen(argv[TEXTO], MODO_LECTURA);
 
 	if (!archivo) {
+		diccionario_destruir(diccionario);
 		return ERROR;
 	}
 
