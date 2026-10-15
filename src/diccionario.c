@@ -150,26 +150,58 @@ diccionario_t *diccionario_crear(unsigned capacidad_inicial)
     return nuevo_diccionario;
 }
 
-bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
-			  void **anterior)
+
+bool insertar_siguiente_pos(struct diccionario *d, size_t posicion, char *clave, void *valor, void **anterior)
 {
-    if (!d || !clave) {
-        return false;
+
+    size_t capacidad_hash_actual = d->capacidad_hash;
+    
+    size_t original = posicion;
+        
+    bool fin = false;
+
+    bool exito = false;
+    
+    posicion = (posicion + 1) % capacidad_hash_actual;
+
+    while (d->entradas[posicion].clave && !fin && !exito) {
+        //Si encuentro el lugar donde está la clave, inserto.
+        if (strcmp(d->entradas[posicion].clave, clave) == 0) {
+            d->entradas[posicion].valor = valor;
+            if (anterior) {
+                *anterior = d->entradas[posicion].valor;
+            }
+            exito = true;
+        } else {
+            posicion = (posicion + 1) % capacidad_hash_actual;
+        }
+        //Si la tabla esta llena salgo de loop (Caso improbable)
+        if (posicion == original) {
+            fin = true;
+        }
+    }
+    //Si no existía la clave en la tabla, inserto nuevos valores en la misma.
+    if (!fin && !exito) {
+        d->entradas[posicion].valor = valor;
+        d->entradas[posicion].clave = clave;
+        
+        if (anterior) {
+            *anterior = NULL;
+        }
+        exito = true;
     }
 
-    //Verificación de la tabla de hash (Ver si hace falta ReHashear)
-    //if (factor_carga(d->cantidad, d->capacidad_hash) >= CARGA_MINIMA) {
-    //    re_hashing(d);
-    //}
+    return exito;
+}
+
+bool operacion_insertar(struct diccionario *d, size_t posicion, char *clave, void *valor, void **anterior)
+{
 
     size_t capacidad_hash_actual = d->capacidad_hash;
 
     bool exito = false;
 
     bool repetido = false;
-
-    size_t n_clave = hash(clave);
-    size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
     
     //Caso donde las claves son iguales
     if (d->entradas[posicion].clave != NULL) {
@@ -197,48 +229,40 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
     
     
     if (!exito) {
-        size_t original = posicion;
-        
-        bool fin = false;
-
-        posicion = (posicion + 1) % capacidad_hash_actual;
-
-        while (d->entradas[posicion].clave && !fin && !exito) {
-            posicion = (posicion + 1) % capacidad_hash_actual;
-
-            //Si encuentro el lugar donde está la clave, inserto.
-            if (strcmp(d->entradas[posicion].clave, clave) == 0) {
-                d->entradas[posicion].valor = valor;
-
-                if (anterior) {
-                    *anterior = d->entradas[posicion].valor;
-                }
-                exito = true;
-            }
-
-            //Si la tabla esta llena salgo de loop (Caso improbable)
-            if (posicion == original) {
-                fin = true;
-            }
-        }
-
-        //Si no existía la clave en la tabla, inserto nuevos valores en la misma.
-        if (!fin && !exito) {
-            d->entradas[posicion].valor = valor;
-            d->entradas[posicion].clave = clave;
-            
-            if (anterior) {
-                *anterior = NULL;
-            }
-            exito = true;
-        }
+        exito = insertar_siguiente_pos(d, posicion, clave, valor, anterior);
     }
     
     if(exito) {
         if (!repetido)
             d->cantidad++;
     }
+
+    return exito;
+}
+
+
+bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
+			  void **anterior)
+{
+    if (!d || !clave) {
+        return false;
+    }
+
+    //Verificación de la tabla de hash (Ver si hace falta ReHashear)
+    //if (factor_carga(d->cantidad, d->capacidad_hash) >= CARGA_MINIMA) {
+    //    re_hashing(d);
+    //}
+
+    size_t capacidad_hash_actual = d->capacidad_hash;
+
+    size_t n_clave = hash(clave);
     
+    size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
+    
+    bool exito = false;
+    
+    exito = operacion_insertar(d, posicion, clave, valor, anterior);
+
     return exito;
 }
 
@@ -281,21 +305,45 @@ bool diccionario_buscar(diccionario_t *d, char *clave)
     return encontrado;
 }
 
-void *diccionario_obtener(diccionario_t *d, char *clave)
+void *buscar_resto_tabla(struct diccionario *d, char *clave, size_t posicion)
 {
-    if (d == NULL || clave == NULL || diccionario_cantidad(d) == 0) {
-        return NULL;
-    }
-    
-    char *valor_obt = { NULL };
+    void *valor_obt = { NULL };
+
+    size_t original = posicion;
+
+    bool fin = false;
+
+    bool encontrado = false;
 
     size_t capacidad_hash_actual = d->capacidad_hash;
 
-    size_t n_clave = hash(clave);
+    posicion = (posicion + 1) % capacidad_hash_actual;
+    
+    //Voy buscando en proximos indices de la tabla
+    while (d->entradas[posicion].clave || !fin || !encontrado) {
+        
+        //Si son iguales, las claves, devuelvo el valor
+        if (strcmp(d->entradas[posicion].clave, clave) == 0) {
+            valor_obt = d->entradas[posicion].valor;
+            encontrado = true;
+        }
+        /* Si ya recorrí toda la tabla y no se encontro la clave, dejo de buscar.
+         * Por defecto se devolverá NULL
+        */
+        if (original == posicion) {
+            fin = true;
+        }
+    }
 
-    size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
+    return valor_obt;
+}
+
+void *operacion_buscar(struct diccionario *d, char *clave, size_t posicion)
+{
 
     bool encontrado = false;
+
+    void *valor_obt = { NULL };
 
     if (strcmp(d->entradas[posicion].clave, clave) == 0) {
         valor_obt = d->entradas[posicion].valor;
@@ -304,29 +352,25 @@ void *diccionario_obtener(diccionario_t *d, char *clave)
     }
 
     if (!encontrado) {
-        size_t original = posicion;
-
-        bool fin = false;
-        posicion = (posicion + 1) % capacidad_hash_actual;
-        
-        //Voy buscando en proximos indices de la tabla
-        while (d->entradas[posicion].clave || !fin || !encontrado) {
-            
-            //Si son iguales, las claves, devuelvo el valor
-            if (strcmp(d->entradas[posicion].clave, clave) == 0) {
-                valor_obt = d->entradas[posicion].valor;
-
-                encontrado = true;
-            }
-
-            /* Si ya recorrí toda la tabla y no se encontro la clave, dejo de buscar.
-             * Por defecto se devolverá NULL
-            */
-            if (original == posicion) {
-                fin = true;
-            }
-        }
+        valor_obt = buscar_resto_tabla(d, clave, posicion);
     }
+
+    return valor_obt;
+}
+
+void *diccionario_obtener(diccionario_t *d, char *clave)
+{
+    if (d == NULL || clave == NULL || diccionario_cantidad(d) == 0) {
+        return NULL;
+    }
+    
+    size_t capacidad_hash_actual = d->capacidad_hash;
+
+    size_t n_clave = hash(clave);
+
+    size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
+
+    void *valor_obt = operacion_buscar(d, clave, posicion);
 
     return valor_obt;
 }
@@ -440,8 +484,57 @@ size_t diccionario_cantidad(diccionario_t *d)
     return d->cantidad;
 }
 
+size_t operacion_iterar(struct diccionario *d, bool (*f)(char *, void *, void *), void *extra, size_t pos)
+{
+    size_t capacidad_h = d->capacidad_hash;
+
+    size_t posicion = pos;
+
+    size_t iteracion = 0;
+
+    size_t original = posicion;
+
+    bool parar = false;
+
+    while (!parar) {
+        void *valor = d->entradas[posicion].valor;
+        char *clave = d->entradas[posicion].clave; 
+
+        if (f(clave, valor, extra)) {
+            iteracion++;
+            posicion = (posicion + 1) % capacidad_h;
+        } else {
+            parar = true;
+        }
+
+        //Si doy una vuelta entera y siempre se iteró, corto el ciclo. 
+        if (original == posicion) {
+            parar = true;
+        }
+    }
+
+    return iteracion;
+}
+
 size_t diccionario_iterar(diccionario_t *d, bool (*f)(char *, void *, void *),
-			  void *extra);
+			  void *extra)
+{
+
+    if (!d || !f || diccionario_cantidad(d) == 0) {
+        return 0;
+    }
+
+    size_t i = 0;
+
+    //Busco el indice del primer valor
+    while (!d->entradas[i].clave){
+        i++;
+    }
+
+    size_t iteracion = operacion_iterar(d, f, extra, i);
+
+    return iteracion;
+}
 
 void diccionario_destruir(diccionario_t *d)
 {
