@@ -166,6 +166,8 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 
     bool exito = false;
 
+    bool repetido = false;
+
     size_t n_clave = hash(clave);
     size_t posicion = posicion_tabla(n_clave, capacidad_hash_actual);
     
@@ -177,6 +179,7 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
             }
             d->entradas[posicion].valor = valor;
             
+            repetido = true;
             exito = true;
         }
     } else {
@@ -232,7 +235,8 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
     }
     
     if(exito) {
-        d->cantidad++;
+        if (!repetido)
+            d->cantidad++;
     }
     
     return exito;
@@ -327,58 +331,12 @@ void *diccionario_obtener(diccionario_t *d, char *clave)
     return valor_obt;
 }
 
-void *diccionario_eliminar(diccionario_t *d, char *clave)
+void acomodar_tabla(struct diccionario *d, size_t posicion)
 {
-    if (!d || !clave || diccionario_cantidad(d) == 0) {
-        return NULL;
-    }
-
-    void *dato_eliminado = { NULL };
-
-    bool exito = false;
-
     size_t capacidad_hash_actual = d->capacidad_hash;
-    
-    size_t n_clave = hash(clave);
-    
-    size_t posicion = posicion_tabla(n_clave, d->capacidad_hash);
-
-    bool encontrado = false;
-
-    bool fin = false;
-    
-    size_t original = posicion; 
-
-    while (d->entradas[posicion].clave != NULL && !encontrado && !fin) {
-
-        if (strcmp(d->entradas[posicion].clave, clave) == 0) {
-            encontrado = true; 
-        }
-        
-        posicion = (posicion + 1) % capacidad_hash_actual;
-
-        if (posicion == original) {
-            fin = true;
-        }
-    }
-
-    //Caso: No se encontro la clave
-    if (d->entradas[posicion].clave == NULL) {
-        return NULL;
-    }
-
-    if (encontrado) {
-        dato_eliminado = d->entradas[posicion].valor;
-
-        free(d->entradas[posicion].clave);
-        d->entradas[posicion].clave = NULL;
-        d->entradas[posicion].valor = NULL;
-
-        exito = true;
-    }
 
     size_t vacio = posicion;
-    size_t siguiente = (vacio + 1) % capacidad_hash_actual;
+    size_t siguiente = (posicion + 1) % capacidad_hash_actual;
 
     //Si el espacio siguiente del eliminado está vacío, no se debe de acomodar nada.
     while (d->entradas[siguiente].clave != NULL) {
@@ -387,16 +345,14 @@ void *diccionario_eliminar(diccionario_t *d, char *clave)
         size_t posicion_m = posicion_tabla(clave_m, capacidad_hash_actual);
 
         bool se_mueve = false;
-
+        
+        //Si el indice es correcto, no se debe de mover nada, caso contrario debo de moverlo al espacio anterior.
         if (posicion_m <= siguiente) {
-            if (posicion_m <= vacio && vacio < siguiente) se_mueve = true;
+            //Si es menor que la posición vacia lo moveremos allí
+            if (posicion_m <= vacio && vacio < siguiente) se_mueve = true; 
 
-        } else { // Manejo del solapamiento circular (wrap-around)
-
-            if (vacio >= posicion_m || vacio < siguiente) se_mueve = true;
         }
 
-        // Mover el elemento al hueco y convertir 'next' en el nuevo hueco
         if (se_mueve) {
             d->entradas[vacio] = d->entradas[siguiente];
             d->entradas[siguiente].clave = NULL;
@@ -406,6 +362,67 @@ void *diccionario_eliminar(diccionario_t *d, char *clave)
 
         siguiente = (siguiente + 1) % capacidad_hash_actual;
     }
+
+}
+
+bool operacion_eliminar(struct diccionario *d, char *clave, size_t posicion, void **dato_d)
+{
+    
+    bool encontrado = false;
+    
+    bool exito = false;
+    
+    bool fin = false;
+    
+    size_t capacidad_hash_actual = d->capacidad_hash;
+
+    size_t original = posicion;
+
+    while (d->entradas[posicion].clave != NULL && !encontrado && !fin) {
+
+        if (strcmp(d->entradas[posicion].clave, clave) == 0) {
+            encontrado = true; 
+        } else {
+            posicion = (posicion + 1) % capacidad_hash_actual;
+        }
+        
+        if (posicion == original) {
+            fin = true;
+        }
+    }
+
+    if (encontrado) { //Caso: Se encontro la llave
+                
+        *dato_d = d->entradas[posicion].valor;
+
+        free(d->entradas[posicion].clave);
+        d->entradas[posicion].clave = NULL;
+        d->entradas[posicion].valor = NULL;
+
+        exito = true;
+    }
+    
+    if (exito){ //Si se encontro la llave se acomoda la tabla, si es necesario.
+        acomodar_tabla(d, posicion);
+    }
+
+    return exito;
+}
+
+
+void *diccionario_eliminar(diccionario_t *d, char *clave)
+{
+    if (!d || !clave || diccionario_cantidad(d) == 0) {
+        return NULL;
+    }
+
+    void *dato_eliminado = { NULL };
+
+    size_t n_clave = hash(clave);
+    
+    size_t posicion = posicion_tabla(n_clave, d->capacidad_hash);
+
+    bool exito = operacion_eliminar(d, clave, posicion, &dato_eliminado);
 
     if (exito) {
         d->cantidad--;
