@@ -563,7 +563,8 @@ void diccionario_destruir_todo(diccionario_t *d, void (*destructor)(void *))
 		if (d->entradas[i].clave) {
 			free(d->entradas[i].clave);
 
-			if (destructor)destructor(d->entradas[i].valor);
+			if (destructor)
+				destructor(d->entradas[i].valor);
 		}
 	}
 
