@@ -126,6 +126,7 @@ bool re_hashing(diccionario_t *d)
 	return true;
 }
 
+//O(n)
 diccionario_t *diccionario_crear(unsigned capacidad_inicial)
 {
 	size_t capacidad;
@@ -156,6 +157,7 @@ diccionario_t *diccionario_crear(unsigned capacidad_inicial)
 	return nuevo_diccionario;
 }
 
+//O(n)
 bool insertar_siguiente_pos(struct diccionario *d, size_t posicion, char *clave,
 			    void *valor, void **anterior, bool *repetido)
 {
@@ -208,6 +210,7 @@ bool insertar_siguiente_pos(struct diccionario *d, size_t posicion, char *clave,
 	return exito;
 }
 
+//O(1)
 bool operacion_insertar(struct diccionario *d, size_t posicion, char *clave,
 			void *valor, void **anterior)
 {
@@ -256,6 +259,7 @@ bool operacion_insertar(struct diccionario *d, size_t posicion, char *clave,
 	return exito;
 }
 
+//O(n) pero O(1) -> Caso promedio
 bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 			  void **anterior)
 {
@@ -280,6 +284,7 @@ bool diccionario_insertar(diccionario_t *d, char *clave, void *valor,
 	return exito;
 }
 
+//O(n) pero O(1) Mejor de los casos
 bool esta_en_diccionario(struct diccionario *d, char *clave, size_t posicion)
 {
 	bool encontrado = false;
@@ -313,6 +318,7 @@ bool esta_en_diccionario(struct diccionario *d, char *clave, size_t posicion)
 	return encontrado;
 }
 
+//O(n)
 bool diccionario_buscar(diccionario_t *d, char *clave)
 {
 	if (!d || !clave)
@@ -327,6 +333,7 @@ bool diccionario_buscar(diccionario_t *d, char *clave)
 	return encontrado;
 }
 
+//O(n)
 void *buscar_resto_tabla(struct diccionario *d, char *clave, size_t posicion)
 {
 	void *valor_obt = NULL;
@@ -360,6 +367,7 @@ void *buscar_resto_tabla(struct diccionario *d, char *clave, size_t posicion)
 	return valor_obt;
 }
 
+//O(1)
 void *operacion_obtener(struct diccionario *d, char *clave, size_t posicion)
 {
 	bool encontrado = false;
@@ -383,6 +391,7 @@ void *operacion_obtener(struct diccionario *d, char *clave, size_t posicion)
 	return valor_obt;
 }
 
+//O(n) pero O(1) -> Best case
 void *diccionario_obtener(diccionario_t *d, char *clave)
 {
 	if (d == NULL || clave == NULL || diccionario_cantidad(d) == 0) {
@@ -398,6 +407,7 @@ void *diccionario_obtener(diccionario_t *d, char *clave)
 	return valor_obt;
 }
 
+//O(n)
 void acomodar_tabla(struct diccionario *d, size_t posicion)
 {
 	size_t vacio = posicion;
@@ -435,6 +445,7 @@ void acomodar_tabla(struct diccionario *d, size_t posicion)
 	}
 }
 
+//O(n)/O(1)
 bool operacion_eliminar(struct diccionario *d, char *clave, size_t posicion,
 			void **dato_d)
 {
@@ -476,6 +487,7 @@ bool operacion_eliminar(struct diccionario *d, char *clave, size_t posicion,
 	return exito;
 }
 
+//O(n) pero O(1) -> Best case
 void *diccionario_eliminar(diccionario_t *d, char *clave)
 {
 	if (!d || !clave || diccionario_cantidad(d) == 0) {
@@ -505,6 +517,7 @@ size_t diccionario_cantidad(diccionario_t *d)
 	return d->cantidad;
 }
 
+//O(n)
 size_t operacion_iterar(struct diccionario *d,
 			bool (*f)(char *, void *, void *), void *extra)
 {
@@ -527,6 +540,7 @@ size_t operacion_iterar(struct diccionario *d,
 	return iteracion;
 }
 
+//O(n)
 size_t diccionario_iterar(diccionario_t *d, bool (*f)(char *, void *, void *),
 			  void *extra)
 {
