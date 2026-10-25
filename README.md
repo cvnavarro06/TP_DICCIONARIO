@@ -92,6 +92,12 @@ Hay una función dedicada a evaluar cuál palabra es una clave o no, dicha funci
 
 ### Estructura de `diccionario`
 
+#### Diagrama de memoria
+<p align="center">
+      <img src="img/Diagrama_de_memoria_diccionario.png" alt="Diagrama_de_direccionamiento_cerrado" width="400" height="270">
+</p>
+
+
 ```
 struct diccionario
 {
