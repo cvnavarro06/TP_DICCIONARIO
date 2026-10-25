@@ -23,7 +23,7 @@ void destructor_contador(void *elemento)
 	elementos_destruidos++;
 }
 
-//Pruebas en un diccionario vacío
+// Pruebas en un diccionario vacío
 void diccionario_pruebas_crear_vacio()
 {
 	pa2m_nuevo_grupo("PRUEBAS EN DICCIONARIO VACÍO");
@@ -55,7 +55,7 @@ void diccionario_pruebas_crear_vacio()
 	diccionario_destruir(d);
 }
 
-//Insercion en diccionario NULL
+// Insercion en diccionario NULL
 void diccionario_pruebas_null()
 {
 	int n1 = 10;
@@ -85,8 +85,7 @@ void diccionario_pruebas_null()
 		     "Se itera un diccionario vacío, devuelve 0");
 }
 
-//Pruebas con claves NULL
-
+// Pruebas con claves NULL
 void diccionario_pruebas_clave_null()
 {
 	pa2m_nuevo_grupo("PRUEBAS CON CLAVES NULL EN UN DICCIONARIO");
@@ -166,7 +165,7 @@ void diccionario_pruebas_insertar_y_obtener()
 	diccionario_destruir(d);
 }
 
-//Inserar varias claves - test re-hashing
+// Inserar varias claves - test re-hashing
 void diccionario_insertar_varias_claves()
 {
 	pa2m_nuevo_grupo(
