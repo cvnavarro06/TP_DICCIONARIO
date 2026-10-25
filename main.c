@@ -5,7 +5,6 @@
 #include <string.h>
 
 #define ARCHIVO 1
-
 #define TEXTO 2
 
 #define ERROR -1
@@ -41,14 +40,14 @@ void cola_destruir_todo(cola_t *c)
  * La cola debe estar previamente creada.
  *
  * Devuelve true si la operación ha sido exitosa, caso contrario devuelve false por algún error en la operación.
-*/
+ */
 bool parsear_texto(cola_t *cola, char *texto)
 {
 	if (!cola || !texto) {
 		return false;
 	}
 
-	//Caso base
+	// Caso base
 	if (*texto == CARACTER_NULO) {
 		return true;
 	}
@@ -103,8 +102,7 @@ bool parsear_texto(cola_t *cola, char *texto)
  *
  * Devuelve true si las claves con sus valores fueron agregados correctamente.
  * Devuelve false si ha ocurrido un error cargando el diccionario
- * 
-*/
+ */
 bool cargar_diccionario(FILE *archivo, struct diccionario *d)
 {
 	if (!archivo || !d) {
@@ -141,7 +139,7 @@ bool cargar_diccionario(FILE *archivo, struct diccionario *d)
  * Se espera una cola y un diccionario previamente verificados.
  *
  * Muestra por pantalla lo solicitado por el enunciado. 
-*/
+ */
 void mostrar_por_pantalla(struct cola *c, struct diccionario *d)
 {
 	if (cola_cantidad(c) == 0) {
@@ -157,13 +155,13 @@ void mostrar_por_pantalla(struct cola *c, struct diccionario *d)
 
 		if (diccionario_buscar(
 			    d,
-			    palabra)) { //Si se encuentra en el diccionario, muestro su valor.
+			    palabra)) { // Si se encuentra en el diccionario, muestro su valor.
 
 			valor = diccionario_obtener(d, palabra);
 
 			printf("%s", valor);
 			free(palabra);
-		} else { //Si no se encuentra en el diccionario, muestro la palabra.
+		} else { // Si no se encuentra en el diccionario, muestro la palabra.
 
 			printf("%s", palabra);
 			free(palabra);
@@ -180,7 +178,9 @@ void mostrar_por_pantalla(struct cola *c, struct diccionario *d)
 int main(int argc, char *argv[])
 {
 	if (argc < 3) {
-		printf("Mal formato pibe\n");
+		printf("Se espera el siguiente formato:\n");
+		printf("./ejecutable <archivo <texto>\n");
+		printf("Para más información ejecuta el comando make exp\n");
 		return ERROR;
 	}
 
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 		return ERROR;
 	}
 
-	//Cierro el archivo, no lo voy a usar más
+	// Cierro el archivo, no lo voy a usar más
 	fclose(archivo);
 
 	cola_t *cola = cola_crear();
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 		return ERROR;
 	}
 
-	//Cargo la cola con las palabras
+	// Cargo la cola con las palabras
 	if (!parsear_texto(cola, argv[TEXTO])) {
 		return ERROR;
 	}
